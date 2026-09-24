@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: Secure Notes API
+  datasource:
+    url: jdbc:mysql://localhost:3306/secure_notes_db?createDatabaseIfNotExist=true
+    username: root
+    password: 1234
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    how-sql: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+          github:
+            client-id: "asdavvavdv"
+            client-secret: "dvvwwwwwc"
+
+jwt:
+  secret: "sa979sd8ayn98fyn8wy8fywuhiuhclapw3eaew"
+  expiration: 3600000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include=health,info,metrics:
+
