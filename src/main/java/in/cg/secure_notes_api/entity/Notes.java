@@ -19,9 +19,9 @@ public class Notes {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long notesId;
+    private Long notesId;
 
-    private int userId;
+    private Integer userId;
 
     private String heading;
 
@@ -29,9 +29,9 @@ public class Notes {
 
     private Boolean isArchived;
 
-    private int labelId;
+    private Integer labelId;
 
-    private int labelName;
+    private String labelName;
 
     private Boolean isMarkedDeleted;
 
