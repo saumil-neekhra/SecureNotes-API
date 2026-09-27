@@ -23,9 +23,10 @@ public class Notes {
 
     private Integer userId;
 
-    private String heading;
+    private String title;
 
-    private String Data;
+    @Lob
+    private String content;
 
     private Boolean isArchived;
 

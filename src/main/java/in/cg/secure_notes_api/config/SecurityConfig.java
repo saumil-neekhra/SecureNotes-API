@@ -55,14 +55,14 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login", "/auth/register",
-                                "/actuator/**","/api/v1/**").permitAll()
-                        .anyRequest().authenticated())
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .oauth2Login(oauth2 -> oauth2.failureHandler(
-                        (request, response, exception) -> {
-                            log.error("OAuth2 error: {}", exception.getMessage());
-                        })
-                        .successHandler(oAuth2SuccessHandler));
+                                "/actuator/**","/api/v1/**","/swagger-ui/").permitAll());
+//                        .anyRequest().authenticated());
+//                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+//                .oauth2Login(oauth2 -> oauth2.failureHandler(
+//                        (request, response, exception) -> {
+//                            log.error("OAuth2 error: {}", exception.getMessage());
+//                        })
+//                        .successHandler(oAuth2SuccessHandler));
 
         return http.build();
     }

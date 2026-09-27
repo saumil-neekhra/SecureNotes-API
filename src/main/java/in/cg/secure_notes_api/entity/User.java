@@ -7,6 +7,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.nio.file.FileStore;
 import java.time.LocalDateTime;
 
 @Entity
@@ -32,5 +33,9 @@ public class User {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
 
 }

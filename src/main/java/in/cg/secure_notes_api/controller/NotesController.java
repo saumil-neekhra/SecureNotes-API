@@ -4,7 +4,6 @@ import in.cg.secure_notes_api.entity.Notes;
 import in.cg.secure_notes_api.repository.NotesRepository;
 import in.cg.secure_notes_api.service.NotesService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -14,9 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.Principal;
-import java.security.URIParameter;
 import java.util.List;
 
 @RestController
@@ -48,7 +45,7 @@ public class NotesController {
         return ResponseEntity.ok(notes);
     }
 
-    @GetMapping("")
+    @GetMapping("/")
     public ResponseEntity<List<Notes>> getAllNotes(
             @PageableDefault (size = 10)
             @SortDefault( sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable
@@ -57,6 +54,24 @@ public class NotesController {
         return ResponseEntity.ok(page.getContent());
     }
 
-    
+    @DeleteMapping("/remove/{id}")
+    public ResponseEntity<Void> removeNotes(@PathVariable Long id){
+        if(notesService.removeNotes(id)){
+            return ResponseEntity.accepted().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    // Path for Auto-Save feature using debouncing and useEffect onChange in react
+    // Debouncing dealying sending request of change by particular time so not to overwhlem the server
+
+    @PutMapping("/save/{id}")
+    public ResponseEntity<Notes> updateNotesUsingPut(@PathVariable Long id,
+                                                     @RequestBody Notes notesDetail){
+        Notes updatedNotes = notesService.updateNotesUsingPut(id, notesDetail).orElse(null);
+        return ResponseEntity.ok(updatedNotes);
+    }
+
+
 
 }

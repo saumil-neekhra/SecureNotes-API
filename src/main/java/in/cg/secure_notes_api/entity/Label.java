@@ -17,13 +17,13 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class Label {
 
-    private String Label;
-
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long labelId;
+    private Long labelId;
 
     private String labelName;
+
+    private String colour;
 
     private Boolean isMarkedDeleted;
 
