@@ -33,7 +33,7 @@ public class NotesService {
     }
 
     public Notes getNotes(Long id) {
-        return notesRepository.getReferenceById(id);
+        return notesRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Worng Id"));
     }
 
     public Page getAllNotes(Pageable pageable) {
