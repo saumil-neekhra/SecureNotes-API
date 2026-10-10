@@ -63,14 +63,23 @@ public class NotesController {
     }
 
     // Path for Auto-Save feature using debouncing and useEffect onChange in react
-    // Debouncing dealying sending request of change by particular time so not to overwhlem the server
+    // Debouncing dealying sending request of change by particular time so not to overwhelm the server
 
-    @PutMapping("/save/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<Notes> updateNotesUsingPut(@PathVariable Long id,
                                                      @RequestBody Notes notesDetail){
         Notes updatedNotes = notesService.updateNotesUsingPut(id, notesDetail).orElse(null);
         return ResponseEntity.ok(updatedNotes);
     }
+
+    @PatchMapping("/{id}/archived-status")
+    public ResponseEntity<Void> changeNotesArchivedStatus(@PathVariable Long id){
+        notesService.changeNotesArchivedStatus(id);
+        return ResponseEntity.noContent().build();
+    }
+
+
+
 
 
 

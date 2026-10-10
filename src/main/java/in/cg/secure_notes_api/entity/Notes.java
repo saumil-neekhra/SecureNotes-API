@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
 @Builder
@@ -30,9 +31,14 @@ public class Notes {
 
     private Boolean isArchived;
 
-    private Integer labelId;
+    @ManyToMany
+    @JoinTable(
+            name = "notes_label",
+            joinColumns = @JoinColumn(name = "notesId"),
+            inverseJoinColumns = @JoinColumn(name = "labelId")
+    )
 
-    private String labelName;
+    private Set<Label> labels;
 
     private Boolean isMarkedDeleted;
 

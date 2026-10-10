@@ -61,4 +61,13 @@ public class NotesService {
 
 
     }
+
+    public void changeNotesArchivedStatus(Long id) {
+        notesRepository.findById(id).map(notes -> {
+                    notes.setIsArchived(!notes.getIsArchived());
+                    notesRepository.save(notes);
+                    return notes;
+                }
+        ).orElseThrow(() -> new RuntimeException("Note not found with id: " + id));
+    }
 }
