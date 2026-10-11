@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -22,8 +23,6 @@ public class Notes {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long notesId;
 
-    private Integer userId;
-
     private String title;
 
     @Lob
@@ -34,11 +33,13 @@ public class Notes {
     @ManyToMany
     @JoinTable(
             name = "notes_label",
-            joinColumns = @JoinColumn(name = "notesId"),
-            inverseJoinColumns = @JoinColumn(name = "labelId")
+            joinColumns = @JoinColumn(name = "notes_id"),
+            inverseJoinColumns = @JoinColumn(name = "label_id")
     )
 
-    private Set<Label> labels;
+    private Set<Label> labels = new HashSet<Label>();
+
+    private Boolean isEligibleForTrashCan;
 
     private Boolean isMarkedDeleted;
 
@@ -47,6 +48,5 @@ public class Notes {
 
     @UpdateTimestamp
     private LocalDateTime updtedAt;
-
 
 }

@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -27,9 +28,7 @@ public class Label {
     private String colour;
 
     @ManyToMany(mappedBy = "labels")
-    private Set<Notes> notesName;
-
-    private Boolean isMarkedDeleted;
+    private Set<Notes> notes = new HashSet<>();
 
     @CreationTimestamp
     @Column(updatable = false)
