@@ -5,10 +5,13 @@ import in.cg.secure_notes_api.entity.Label;
 import in.cg.secure_notes_api.entity.Notes;
 import in.cg.secure_notes_api.mapper.LabelMapper;
 import in.cg.secure_notes_api.repository.LabelRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Set;
 
@@ -42,15 +45,6 @@ public class LabelService {
         return response;
     }
 
-    public UpdateLabelResponseDTO updateLabel(UpdateLabelRequestDTO requestDTO, Long id) {
-        return labelRepository.findById(id).map(existingLabel -> {
-                existingLabel.setLabelName(requestDTO.getLabelName());
-                existingLabel.setColour(requestDTO.getColour());
-                Label savedlabel = labelRepository.save(existingLabel);
-                return savedlabel;
-        });
-    }
-
     public Set<Notes> getAllNotesAssociatedWithLabel(Long labelId) {
         Label label = labelRepository.findById(labelId)
                 .orElseThrow(() -> new RuntimeException("Label not found: " + labelId));
@@ -65,5 +59,44 @@ public class LabelService {
         }else{
             throw new RuntimeException("Label not found: " + labelId);
         }
+    }
+
+    @Transactional
+    public UpdateLabelResponseDTO updateLabel(
+            UpdateLabelRequestDTO requestDTO, Long id) {
+
+        Label label = labelRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Label not found"));
+
+        if (requestDTO.getLabelName().isPresent()) {
+            String name = requestDTO.getLabelName().get();
+
+            if (name == null || name.isBlank()) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Label name cannot be null or blank");
+            }
+
+            label.setLabelName(name);
+        }
+
+        if (requestDTO.getColour().isPresent()) {
+            String colour = requestDTO.getColour().get();
+
+            if (colour == null || colour.isBlank()) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Colour cannot be null or blank");
+            }
+
+            label.setColour(colour);
+        }
+
+        return UpdateLabelResponseDTO.builder()
+                .id(label.getLabelId())
+                .labelName(label.getLabelName())
+                .colour(label.getColour())
+                .build();
     }
 }

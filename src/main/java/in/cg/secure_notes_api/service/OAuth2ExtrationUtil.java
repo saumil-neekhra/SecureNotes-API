@@ -22,7 +22,7 @@ public class OAuth2ExtrationUtil {
     }
 
 //    Every Site send ProviderId in some different way so we need special method to
-//    get id like for Google attribute name is Sub in string format
+//    get id like for Google attribute labelName is Sub in string format
 //    For GitHub  it is id in long format so we use toString
     public String determineProviderIdFromOAuth2User(OAuth2User oAuth2User, String registrationId){
         String providerId = switch (registrationId.toLowerCase()){

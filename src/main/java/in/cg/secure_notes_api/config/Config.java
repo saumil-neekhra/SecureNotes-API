@@ -1,6 +1,7 @@
 package in.cg.secure_notes_api.config;
 
 import in.cg.secure_notes_api.security.CustomUserDetailService;
+import org.openapitools.jackson.nullable.JsonNullableModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -9,6 +10,10 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import com.fasterxml.jackson.databind.Module;
+//import org.openapitools.jackson.nullable.JsonNullableModule;
+//import org.springframework.context.annotation.Bean;
+//import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class Config {
@@ -37,5 +42,10 @@ public class Config {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception{
         return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
+    public Module jsonNullableModule() {
+        return new JsonNullableModule();
     }
 }

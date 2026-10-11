@@ -1,3 +1,4 @@
+
 package in.cg.secure_notes_api.dto;
 
 import lombok.AllArgsConstructor;
@@ -10,7 +11,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class UpdateLabelResponseDTO {
-    Long id;
-    String name;
-    String colour;
+
+    private Long id;
+    private String labelName;
+    private String colour;
 }

@@ -23,9 +23,11 @@ public class Label {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long labelId;
 
+    @Column(nullable = false)
     private String labelName;
 
-    private String colour;
+    @Column(nullable = false)
+    private String colour = "White";
 
     @ManyToMany(mappedBy = "labels")
     private Set<Notes> notes = new HashSet<>();

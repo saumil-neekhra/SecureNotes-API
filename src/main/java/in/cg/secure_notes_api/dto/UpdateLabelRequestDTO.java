@@ -1,16 +1,16 @@
 package in.cg.secure_notes_api.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.openapitools.jackson.nullable.JsonNullable;
 
-@Data
-@AllArgsConstructor
+@Getter
 @NoArgsConstructor
-@Builder
+@Setter
 public class UpdateLabelRequestDTO {
     Long id;
-    String name;
-    String colour;
+    private JsonNullable<String> labelName =
+            JsonNullable.undefined();
+
+    private JsonNullable<String> colour =
+            JsonNullable.undefined();
 }

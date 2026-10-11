@@ -1,7 +1,6 @@
 package in.cg.secure_notes_api.controller;
 
 import in.cg.secure_notes_api.dto.*;
-import in.cg.secure_notes_api.entity.Label;
 import in.cg.secure_notes_api.entity.Notes;
 import in.cg.secure_notes_api.repository.LabelRepository;
 import in.cg.secure_notes_api.service.LabelService;
@@ -65,8 +64,13 @@ public class LabelController {
 
 
     @PatchMapping("/update/{id}")
-    public ResponseEntity<UpdateLabelResponseDTO> updateLabel(@RequestBody UpdateLabelRequestDTO label, @PathVariable Long id){
-        UpdateLabelResponseDTO response = labelService.updateLabel(label, id);
+    public ResponseEntity<UpdateLabelResponseDTO> updateLabel(
+            @RequestBody UpdateLabelRequestDTO label,
+            @PathVariable Long id) {
+
+        UpdateLabelResponseDTO response =
+                labelService.updateLabel(label, id);
+
         return ResponseEntity.ok(response);
     }
 
