@@ -1,10 +1,7 @@
 package in.cg.secure_notes_api.controller;
 
-import in.cg.secure_notes_api.dto.AddLabelToNotesResponseDTO;
-import in.cg.secure_notes_api.dto.RemoveLabelFromNotesResponseDTO;
+import in.cg.secure_notes_api.dto.*;
 import in.cg.secure_notes_api.entity.Label;
-import in.cg.secure_notes_api.entity.Notes;
-import in.cg.secure_notes_api.repository.NotesRepository;
 import in.cg.secure_notes_api.service.NotesService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,45 +21,43 @@ import java.util.Set;
 @RequestMapping("/notes")
 public class NotesController {
 
-    private final NotesRepository notesRepository;
     private final NotesService notesService;
 
-    public NotesController(NotesRepository notesRepository, NotesService notesService) {
-        this.notesRepository = notesRepository;
+    public NotesController(NotesService notesService) {
         this.notesService = notesService;
     }
 
-    @GetMapping("/id")
-    public ResponseEntity<Notes> getNotes(@PathVariable Long id){
-        Notes notes = notesService.getNotes(id);
+    @GetMapping("/{id}")
+    public ResponseEntity<NotesResponseDTO> getNotes(@PathVariable Long id){
+        NotesResponseDTO notes = notesService.getNotes(id);
         return ResponseEntity.ok(notes);
     }
 
-    @GetMapping("/")
-    public ResponseEntity<List<Notes>> getAllNotes(
+    @GetMapping("")
+    public ResponseEntity<List<NotesResponseDTO>> getAllNotes(
             @PageableDefault (size = 10)
             @SortDefault( sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable
     ){
-        Page page = notesService.getAllNotes(pageable);
+        Page<NotesResponseDTO> page = notesService.getAllNotes(pageable);
         return ResponseEntity.ok(page.getContent());
     }
 
-    @GetMapping("/{noteId}/labels")
+    @GetMapping("/{notesId}/labels")
     public ResponseEntity<Set<Label>> getAllLabelAssociatedWithNote(
             @PathVariable Long notesId
     ){
         return ResponseEntity.ok(notesService.getAllLabelAssociatedWithNote(notesId));
     }
 
-    @PostMapping("/")
-    public ResponseEntity<Void> createNewNotes(@RequestBody Notes notes, Principal principal) {
-        Notes savedNotes = notesService.createNotes(notes,principal);
+    @PostMapping("")
+    public ResponseEntity<NotesResponseDTO> createNewNotes(@RequestBody NotesRequestDTO request, Principal principal) {
+        NotesResponseDTO response = notesService.createNotes(request,principal);
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
-                .buildAndExpand(savedNotes.getNotesId())
+                .buildAndExpand(response.getNotesId())
                 .toUri();
-        return ResponseEntity.created(location).build();
+        return ResponseEntity.created(location).body(response);
     }
 
     @PostMapping("/{notesId}/labels/{labelId}")
@@ -76,26 +71,27 @@ public class NotesController {
         return ResponseEntity.ok(savedNotes);
     }
 
-    @DeleteMapping("/{noteId}/labels/{labelId}")
+    @DeleteMapping("/{notesId}/labels/{labelsId}")
     public ResponseEntity<RemoveLabelFromNotesResponseDTO> removeLabelFromNotes(
             @PathVariable Long notesId,
-            @PathVariable Long labelId){
+            @PathVariable Long labelsId){
 
-        RemoveLabelFromNotesResponseDTO removeLabelFromNotesResponseDTO = notesService.removeLabelFromNotes(notesId, labelId);
+        RemoveLabelFromNotesResponseDTO removeLabelFromNotesResponseDTO =
+                notesService.removeLabelFromNotes(notesId, labelsId);
         return ResponseEntity.ok(removeLabelFromNotesResponseDTO);
     }
 
 
-    @DeleteMapping("/remove/{id}")
-    public ResponseEntity<Void> removeNotes(@PathVariable Long id){
+    @DeleteMapping("/notes/{noteId}/trash")
+    public ResponseEntity<Void> moveNotesToTrashCan(@PathVariable Long noteId){
 
-        notesService.moveLabelToTrashCan(id);
-        return ResponseEntity.accepted().build();
+        notesService.moveNotesToTrashCan(noteId);
+        return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/delete-permanently/{id}")
-    public ResponseEntity<Void> permanentlyDeleteFromUser(@PathVariable Long id){
-        notesService.permanentlyDeleteFromUser(id);
+    @DeleteMapping("/notes/{noteId}/permanent")
+    public ResponseEntity<Void> permanentlyDeleteFromUser(@PathVariable Long noteId){
+        notesService.permanentlyDeleteFromUser(noteId);
         return ResponseEntity.noContent().build();
     }
 
@@ -104,22 +100,38 @@ public class NotesController {
     // Path for Auto-Save feature using debouncing and useEffect onChange in react
     // Debouncing dealying sending request of change by particular time so not to overwhelm the server
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<Notes> updateNotesUsingPut(@PathVariable Long id,
-                                                     @RequestBody Notes notesDetail){
-        Notes updatedNotes = notesService.updateNotesUsingPut(id, notesDetail).orElse(null);
-        return ResponseEntity.ok(updatedNotes);
+    @PutMapping("/update/{noteId}")
+    public ResponseEntity<NotesResponseDTO> updateNotesUsingPut(@PathVariable Long noteId,
+                                                     @RequestBody UpdateNotesRequestDTO requestDTO,
+                                                     Principal principal){
+        NotesResponseDTO responseDTO = notesService.updateNotesUsingPut(noteId, requestDTO, principal);
+        return ResponseEntity.ok(responseDTO);
     }
 
-    @PatchMapping("/{id}/archived-status")
-    public ResponseEntity<Void> changeNotesArchivedStatus(@PathVariable Long id){
-        notesService.changeNotesArchivedStatus(id);
+    @PatchMapping("/archive")
+    public ResponseEntity<Void> changeNotesArchivedStatus(@RequestBody ArchiveStatusRequestDTO archiveStatusRequestDTO){
+        notesService.changeNotesArchivedStatus(archiveStatusRequestDTO);
         return ResponseEntity.noContent().build();
     }
 
+    //get all archived notes
+    @GetMapping("/archived-notes/")
+    public ResponseEntity<Page<NotesResponseDTO>> getAllArchivedNotes(
+            @PageableDefault (size = 10)
+                @SortDefault ( sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable
+    ){
+        return ResponseEntity.ok(notesService.getAllArchivedNotes(pageable));
+    }
 
 
-
+    // get all trashed Notes
+    @GetMapping("/trashed-notes/")
+    public ResponseEntity<Page<NotesResponseDTO>> getAllTrashedNotes(
+            @PageableDefault (size = 10)
+            @SortDefault( sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable
+    ){
+        return ResponseEntity.ok(notesService.getAllTrashedNotes(pageable));
+    }
 
 
 }

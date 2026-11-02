@@ -1,7 +1,6 @@
 package in.cg.secure_notes_api.service;
 
-import in.cg.secure_notes_api.dto.AddLabelToNotesResponseDTO;
-import in.cg.secure_notes_api.dto.RemoveLabelFromNotesResponseDTO;
+import in.cg.secure_notes_api.dto.*;
 import in.cg.secure_notes_api.entity.Label;
 import in.cg.secure_notes_api.entity.Notes;
 import in.cg.secure_notes_api.mapper.NotesMapper;
@@ -13,7 +12,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
-import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -29,56 +27,57 @@ public class NotesService {
         this.notesMapper = notesMapper;
     }
 
-    public Notes createNotes(Notes notes, Principal principal){
-        Notes newNotes = Notes.builder()
-                .title(null)
-                .content(null)
-                .isArchived(false)
-                .labels(null)
-                .build();
-        notesRepository.save(newNotes);
-        return newNotes;
+    // get all active notes that are not archived  ---  Done
+    // get all archived notes  ----  Done
+    // get all trash notes  ----  Done
+    // search includes archived notes   ----
+
+    public NotesResponseDTO getNotes(Long id) {
+        // Sending Whole Notes instead send a DTO
+         Notes notes = notesRepository.getNotesById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Note not Found : " + id));
+         return notesMapper.toNotesDTO(notes);
     }
 
-    public Notes getNotes(Long id) {
-        return notesRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Worng Id"));
+    public Page<NotesResponseDTO> getAllNotes(Pageable pageable) {
+        // Send a DTO insted of sending a Entity
+        notesRepository.findAll(pageable);
+
+        return notesRepository
+                .getAllNotes(pageable)
+                .map(notesMapper::toNotesDTO);
+//                .map(notes -> {
+//            NotesResponseDTO notesDTO = notesMapper.toNotesDTO(notes);
+//            return notesDTO;
+//        });
     }
 
-    public Page getAllNotes(Pageable pageable) {
-        return notesRepository.findAll(pageable);
+    public Set<Label> getAllLabelAssociatedWithNote(Long notesId) {
+        // No Issue
+        Notes notes = notesRepository.findById(notesId).orElseThrow(() ->
+                new IllegalArgumentException("Note not found: " + notesId)
+        );
+        return notes.getLabels();
     }
 
-    public Boolean notesExists(Long id){
-        return notesRepository.existsById(id);
-    }
+    public NotesResponseDTO createNotes(NotesRequestDTO requestDTO, Principal principal){
+        // Create using MapStruct and send DTO instead of Entity
+        // Also check Principal (Authentication)  ??????????????????????????
 
-    public Optional<Notes> updateNotesUsingPut(Long id, Notes incomingNotes) {
-        return notesRepository.findById(id).map( existingNotes -> {
-            existingNotes.setTitle(incomingNotes.getTitle());
-            existingNotes.setContent(incomingNotes.getContent());
-            Notes savedNote = notesRepository.save(existingNotes);
-            return savedNote;
-        });
+        Notes savedNotes = notesMapper.toNotesEntity(requestDTO);
+        notesRepository.save(savedNotes);
 
-
-    }
-    public void changeNotesArchivedStatus(Long id) {
-        notesRepository.findById(id).map(notes -> {
-                    notes.setIsArchived(!notes.getIsArchived());
-                    notesRepository.save(notes);
-                    return notes;
-                }
-        ).orElseThrow(() -> new RuntimeException("Note not found with id: " + id));
+        return notesMapper.toNotesDTO(savedNotes);
     }
 
     @Transactional
     public AddLabelToNotesResponseDTO addLabelToNotes(Long notesId, Long labelId) {
 
         Notes notes = notesRepository.findById(notesId).orElseThrow(() ->
-                new RuntimeException("Note not found: " + notesId)
+                new IllegalArgumentException("Note not found: " + notesId)
         );
         Label label = labelRepository.findById(labelId).orElseThrow(() ->
-                new RuntimeException("Label not founr: " + labelId));
+                new IllegalArgumentException("Label not found: " + labelId));
 
         notes.getLabels().add(label);
         label.getNotes().add(notes);
@@ -99,35 +98,77 @@ public class NotesService {
         return notesMapper.toRemoveLabelFromNotesResponseDTO(notesRepository.save(notes));
     }
 
-    public Set<Label> getAllLabelAssociatedWithNote(Long notesId) {
-        Notes notes = notesRepository.findById(notesId).orElseThrow(() ->
-                new RuntimeException("Note not found: " + notesId)
-        );
 
-        return notes.getLabels();
+    public NotesResponseDTO updateNotesUsingPut(Long id, 
+                                               UpdateNotesRequestDTO requestDTO, 
+                                               Principal principal) {
+        // Make Proper DTO Request and Response and Don't Send Optional to Controller
+        Notes notes =  notesRepository
+                .findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Notes not found : " + id));
+                
+        if(requestDTO.getTitle()!=null){
+            notes.setTitle(requestDTO.getTitle());
+        }
+        if(requestDTO.getContent()!=null){
+            notes.setTitle(requestDTO.getContent());
+        }
+        NotesResponseDTO savedNote = notesMapper.toNotesDTO(notesRepository.save(notes));
+        return savedNote;
+
+
     }
 
-    public void moveLabelToTrashCan(Long id) {
+    // Trying to save change by ourselves
+    public void changeNotesArchivedStatus(ArchiveStatusRequestDTO requestDTO) {
+        notesRepository.findById(requestDTO.getId()).map(notes -> {
+                    notes.setIsArchived(requestDTO.getArchiveStatus());
+                    notesRepository.save(notes);
+                    return notes;
+                }
+        ).orElseThrow(() -> new RuntimeException("Note not found with id: " + requestDTO.getId()));
+    }
+
+    @Transactional
+    // Transactional is used to save modified data persistently
+    // If we don't do this then on Java Entity Object will be modified
+    // but changes will not persist in database.
+    public void moveNotesToTrashCan(Long id) {
         Notes notes = notesRepository
-                .findById(id).orElseThrow(() -> new RuntimeException("Label not found: " + id));
+                .findById(id).orElseThrow(() -> new RuntimeException("Notes not found: " + id));
 
         if (!notes.getIsEligibleForTrashCan()) {
             notes.setIsEligibleForTrashCan(true);
+            notes.setIsArchived(false);
         } else {
             throw new RuntimeException("Already moved to trash Can");
         }
-
     }
 
+
+    @Transactional
     public void permanentlyDeleteFromUser(Long id) {
         Notes notes = notesRepository
-                .findById(id).orElseThrow(() -> new RuntimeException("Label not found: " + id));
+                .findById(id).orElseThrow(() -> new IllegalArgumentException("Label not found: " + id));
 
         if (notes.getIsEligibleForTrashCan()) {
+            notes.setIsEligibleForTrashCan(false);
             notes.setIsMarkedDeleted(true);
             // A Schedular that will automatically delete this from database after 30 Days
         } else {
-            throw new RuntimeException("Moved label to Trash Can First");
+            throw new RuntimeException("Moved Notes to Trash Can First");
         }
+    }
+
+
+    public Page<NotesResponseDTO> getAllArchivedNotes(Pageable pageable) {
+        return notesRepository
+                .getAllArchivedNotes(pageable)
+                .map(notesMapper::toNotesDTO);
+    }
+
+
+    public Page<NotesResponseDTO> getAllTrashedNotes(Pageable pageable) {
+        return notesRepository.getAllTrashedNotes(pageable).map(notesMapper::toNotesDTO);
     }
 }

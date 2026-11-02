@@ -28,7 +28,7 @@ public class Notes {
     @Lob
     private String content;
 
-    private Boolean isArchived;
+    private Boolean isArchived = false;
 
     @ManyToMany
     @JoinTable(
@@ -36,12 +36,11 @@ public class Notes {
             joinColumns = @JoinColumn(name = "notes_id"),
             inverseJoinColumns = @JoinColumn(name = "label_id")
     )
-
     private Set<Label> labels = new HashSet<Label>();
 
-    private Boolean isEligibleForTrashCan;
+    private Boolean isEligibleForTrashCan = false;
 
-    private Boolean isMarkedDeleted;
+    private Boolean isMarkedDeleted = false;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
