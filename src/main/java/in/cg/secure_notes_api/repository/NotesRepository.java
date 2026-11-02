@@ -5,13 +5,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
 public interface NotesRepository extends JpaRepository<Notes, Long> {
 
-    @Query("Select n from Notes n where n.isArchived = false and n.isEligibleForTrashCan = false and n.isPermanentlyDeleted = false")
-    Optional<Notes> getNotesById(Long id);
+    @Query("Select n from Notes n where n.notesId = :id and n.isArchived = false and n.isEligibleForTrashCan = false and n.isPermanentlyDeleted = false")
+    Optional<Notes> getNotesById(@Param("id") Long id);
 
     @Query("Select n from Notes n where n.isArchived = false and n.isEligibleForTrashCan = false and n.isPermanentlyDeleted = false")
     Page<Notes> getAllNotes(Pageable pageable);

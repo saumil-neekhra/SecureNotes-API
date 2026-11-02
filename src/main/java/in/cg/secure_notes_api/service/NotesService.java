@@ -31,6 +31,8 @@ public class NotesService {
     // get all archived notes  ----  Done
     // get all trash notes  ----  Done
     // search includes archived notes   ----
+    // Pinned Functionality Remaining
+    // Update Functionality
 
     public NotesResponseDTO getNotes(Long id) {
         // Sending Whole Notes instead send a DTO
@@ -98,25 +100,25 @@ public class NotesService {
         return notesMapper.toRemoveLabelFromNotesResponseDTO(notesRepository.save(notes));
     }
 
-
-    public NotesResponseDTO updateNotesUsingPut(Long id, 
+    @Transactional
+    public NotesResponseDTO updateNotes(Long id,
                                                UpdateNotesRequestDTO requestDTO, 
                                                Principal principal) {
         // Make Proper DTO Request and Response and Don't Send Optional to Controller
+        // Treating NULL as don't Update
         Notes notes =  notesRepository
-                .findById(id)
+                .getNotesById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Notes not found : " + id));
-                
+
         if(requestDTO.getTitle()!=null){
             notes.setTitle(requestDTO.getTitle());
         }
         if(requestDTO.getContent()!=null){
-            notes.setTitle(requestDTO.getContent());
+            notes.setContent(requestDTO.getContent());
         }
-        NotesResponseDTO savedNote = notesMapper.toNotesDTO(notesRepository.save(notes));
+
+        NotesResponseDTO savedNote = notesMapper.toNotesDTO(notes);
         return savedNote;
-
-
     }
 
     // Trying to save change by ourselves

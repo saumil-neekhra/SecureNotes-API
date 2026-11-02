@@ -27,6 +27,8 @@ public class NotesController {
         this.notesService = notesService;
     }
 
+    // Pinned Functionality Remaining
+
     @GetMapping("/{id}")
     public ResponseEntity<NotesResponseDTO> getNotes(@PathVariable Long id){
         NotesResponseDTO notes = notesService.getNotes(id);
@@ -100,11 +102,11 @@ public class NotesController {
     // Path for Auto-Save feature using debouncing and useEffect onChange in react
     // Debouncing dealying sending request of change by particular time so not to overwhelm the server
 
-    @PutMapping("/update/{noteId}")
-    public ResponseEntity<NotesResponseDTO> updateNotesUsingPut(@PathVariable Long noteId,
+    @PatchMapping("/update/{noteId}")
+    public ResponseEntity<NotesResponseDTO> updateNotes(@PathVariable Long noteId,
                                                      @RequestBody UpdateNotesRequestDTO requestDTO,
                                                      Principal principal){
-        NotesResponseDTO responseDTO = notesService.updateNotesUsingPut(noteId, requestDTO, principal);
+        NotesResponseDTO responseDTO = notesService.updateNotes(noteId, requestDTO, principal);
         return ResponseEntity.ok(responseDTO);
     }
 
