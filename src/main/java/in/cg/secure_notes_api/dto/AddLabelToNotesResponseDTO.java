@@ -17,4 +17,6 @@ public class AddLabelToNotesResponseDTO {
     Long notesId;
     String title;
     Set<Label> labels;
+    Boolean isArchived;
+    String content;
 }

@@ -62,13 +62,13 @@ public class NotesController {
         return ResponseEntity.created(location).body(response);
     }
 
-    @PostMapping("/{notesId}/labels/{labelId}")
+    @PostMapping("/{notesId}")
     public ResponseEntity<AddLabelToNotesResponseDTO> addLabelToNotes(
             @PathVariable Long notesId,
-            @PathVariable Long labelId){
+            @RequestBody AddLabelRequest request){
 
         AddLabelToNotesResponseDTO savedNotes =
-                notesService.addLabelToNotes(notesId, labelId);
+                notesService.addLabelToNotes(notesId, request);
 
         return ResponseEntity.ok(savedNotes);
     }
@@ -102,7 +102,7 @@ public class NotesController {
     // Path for Auto-Save feature using debouncing and useEffect onChange in react
     // Debouncing dealying sending request of change by particular time so not to overwhelm the server
 
-    @PatchMapping("/update/{noteId}")
+    @PatchMapping("/{noteId}")
     public ResponseEntity<NotesResponseDTO> updateNotes(@PathVariable Long noteId,
                                                      @RequestBody UpdateNotesRequestDTO requestDTO,
                                                      Principal principal){

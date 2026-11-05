@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -20,11 +21,13 @@ public class NotesService {
     private final NotesRepository notesRepository;
     private final LabelRepository labelRepository;
     private final NotesMapper notesMapper;
+    private final LabelService labelService;
 
-    public NotesService(NotesRepository notesRepository, LabelRepository labelRepository, NotesMapper notesMapper) {
+    public NotesService(NotesRepository notesRepository, LabelRepository labelRepository, NotesMapper notesMapper, LabelService labelService) {
         this.notesRepository = notesRepository;
         this.labelRepository = labelRepository;
         this.notesMapper = notesMapper;
+        this.labelService = labelService;
     }
 
     // get all active notes that are not archived  ---  Done
@@ -33,6 +36,16 @@ public class NotesService {
     // search includes archived notes   ----
     // Pinned Functionality Remaining
     // Update Functionality
+
+    public NotesResponseDTO createNotes(NotesRequestDTO requestDTO, Principal principal){
+        // Create using MapStruct and send DTO instead of Entity
+        // Also check Principal (Authentication)  ??????????????????????????
+
+        Notes savedNotes = notesMapper.toNotesEntity(requestDTO);
+        notesRepository.save(savedNotes);
+
+        return notesMapper.toNotesDTO(savedNotes);
+    }
 
     public NotesResponseDTO getNotes(Long id) {
         // Sending Whole Notes instead send a DTO
@@ -54,38 +67,40 @@ public class NotesService {
 //        });
     }
 
-    public Set<Label> getAllLabelAssociatedWithNote(Long notesId) {
-        // No Issue
-        Notes notes = notesRepository.findById(notesId).orElseThrow(() ->
-                new IllegalArgumentException("Note not found: " + notesId)
-        );
-        return notes.getLabels();
-    }
-
-    public NotesResponseDTO createNotes(NotesRequestDTO requestDTO, Principal principal){
-        // Create using MapStruct and send DTO instead of Entity
-        // Also check Principal (Authentication)  ??????????????????????????
-
-        Notes savedNotes = notesMapper.toNotesEntity(requestDTO);
-        notesRepository.save(savedNotes);
-
-        return notesMapper.toNotesDTO(savedNotes);
-    }
-
     @Transactional
-    public AddLabelToNotesResponseDTO addLabelToNotes(Long notesId, Long labelId) {
+    public AddLabelToNotesResponseDTO addLabelToNotes(Long notesId, AddLabelRequest addLabelRequest) {
+
+        // Add label -> Notes
+        // Id present -> Add
+        // Id Absent -> Add Label -> Add it to Notes
 
         Notes notes = notesRepository.findById(notesId).orElseThrow(() ->
                 new IllegalArgumentException("Note not found: " + notesId)
         );
-        Label label = labelRepository.findById(labelId).orElseThrow(() ->
-                new IllegalArgumentException("Label not found: " + labelId));
 
-        notes.getLabels().add(label);
-        label.getNotes().add(notes);
+        if(addLabelRequest.getLabelId() != null){
+            Label label = labelRepository.findById(addLabelRequest.getLabelId())
+                .orElseThrow(() ->
+                new IllegalArgumentException("Label not found: " + addLabelRequest.getLabelId()));
 
-        return notesMapper.toAddLabelToNotesResponseDTO(notesRepository.save(notes));
+            notes.getLabels().add(label);
+            label.getNotes().add(notes);
+        }else{
+            CreateLabelRequest createLabelRequest = new CreateLabelRequest(addLabelRequest.getLabelName());
+            CreateLabelResponse createLabelResponse = labelService.createLabel(createLabelRequest);
+
+            Label label = labelRepository.findById(createLabelResponse.getLabelId())
+                    .orElseThrow(() ->
+                            new IllegalArgumentException("Label not found: " + createLabelResponse.getLabelId()));
+
+            notes.getLabels().add(label);
+            label.getNotes().add(notes);
+        }
+
+        return notesMapper.toAddLabelToNotesResponseDTO(notes);
     }
+
+
 
     public RemoveLabelFromNotesResponseDTO removeLabelFromNotes(Long notesId, Long labelId) {
         Notes notes = notesRepository.findById(notesId).orElseThrow(() ->
@@ -100,10 +115,18 @@ public class NotesService {
         return notesMapper.toRemoveLabelFromNotesResponseDTO(notesRepository.save(notes));
     }
 
+    public Set<Label> getAllLabelAssociatedWithNote(Long notesId) {
+        // No Issue
+        Notes notes = notesRepository.findById(notesId).orElseThrow(() ->
+                new IllegalArgumentException("Note not found: " + notesId)
+        );
+        return notes.getLabels();
+    }
+
     @Transactional
     public NotesResponseDTO updateNotes(Long id,
-                                               UpdateNotesRequestDTO requestDTO, 
-                                               Principal principal) {
+                                        UpdateNotesRequestDTO requestDTO,
+                                        Principal principal) {
         // Make Proper DTO Request and Response and Don't Send Optional to Controller
         // Treating NULL as don't Update
         Notes notes =  notesRepository
@@ -131,6 +154,13 @@ public class NotesService {
         ).orElseThrow(() -> new RuntimeException("Note not found with id: " + requestDTO.getId()));
     }
 
+    public Page<NotesResponseDTO> getAllArchivedNotes(Pageable pageable) {
+        return notesRepository
+                .getAllArchivedNotes(pageable)
+                .map(notesMapper::toNotesDTO);
+    }
+
+
     @Transactional
     // Transactional is used to save modified data persistently
     // If we don't do this then on Java Entity Object will be modified
@@ -147,6 +177,10 @@ public class NotesService {
         }
     }
 
+    public Page<NotesResponseDTO> getAllTrashedNotes(Pageable pageable) {
+        return notesRepository.getAllTrashedNotes(pageable).map(notesMapper::toNotesDTO);
+    }
+
 
     @Transactional
     public void permanentlyDeleteFromUser(Long id) {
@@ -158,19 +192,13 @@ public class NotesService {
             notes.setIsMarkedDeleted(true);
             // A Schedular that will automatically delete this from database after 30 Days
         } else {
-            throw new RuntimeException("Moved Notes to Trash Can First");
+            throw new RuntimeException("Move the note to trash before permanently deleting it");
         }
     }
 
 
-    public Page<NotesResponseDTO> getAllArchivedNotes(Pageable pageable) {
-        return notesRepository
-                .getAllArchivedNotes(pageable)
-                .map(notesMapper::toNotesDTO);
-    }
 
 
-    public Page<NotesResponseDTO> getAllTrashedNotes(Pageable pageable) {
-        return notesRepository.getAllTrashedNotes(pageable).map(notesMapper::toNotesDTO);
-    }
+
+
 }

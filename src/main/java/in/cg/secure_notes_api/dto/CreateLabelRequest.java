@@ -10,7 +10,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class CreateLabelRequest {
-    Long id;
     String labelName;
-    String colour;
 }

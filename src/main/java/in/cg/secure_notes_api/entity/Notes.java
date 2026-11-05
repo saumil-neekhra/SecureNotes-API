@@ -28,6 +28,8 @@ public class Notes {
     @Lob
     private String content;
 
+//    private Boolean isActive = false;    Under Development
+
     private Boolean isArchived = false;
 
     @ManyToMany
